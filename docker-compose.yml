@@ -32,3 +32,14 @@ services:
     container_name: calorie_redis
     ports:
       - "6379:6379"
+
+  celery_worker:
+    build: .
+    command: celery -A app.core.celery_worker.celery_app worker --loglevel=info
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+      - postgres
+    env_file:
+      - .env
