@@ -13,3 +13,10 @@ python-jose
 python-multipart
 pandas
 celery 
+
+pytest
+pytest-asyncio
+httpx
+faker
+pytest-cov
+pytest-mock
