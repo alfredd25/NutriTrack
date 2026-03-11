@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.schemas.user import UserCreate, UserLogin
-from app.repositories.user_repository import create_user, get_user_by_email
 from app.auth.hashing import hash_password, verify_password
 from app.auth.jwt_handler import create_access_token
 from app.core.database import SessionLocal
+from app.repositories.user_repository import create_user, get_user_by_email
+from app.schemas.user import UserCreate, UserLogin
 
 router = APIRouter()
+
 
 def get_db():
     db = SessionLocal()
@@ -16,11 +17,13 @@ def get_db():
     finally:
         db.close()
 
+
 @router.post("/register")
 def register(user: UserCreate, db: Session = Depends(get_db)):
     hashed = hash_password(user.password)
     new_user = create_user(db, user.email, hashed)
     return {"user_id": new_user.id}
+
 
 @router.post("/login")
 def login(user: UserLogin, db: Session = Depends(get_db)):

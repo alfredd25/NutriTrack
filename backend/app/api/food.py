@@ -19,6 +19,7 @@ def get_db():
 def search_food_endpoint(q: str, db: Session = Depends(get_db)):
     return search_food(db, q)
 
+
 @router.get("/foods/autocomplete")
 def autocomplete(q: str, db: Session = Depends(get_db)):
     return autocomplete_food(db, q)
