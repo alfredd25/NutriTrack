@@ -19,9 +19,6 @@ services:
       dockerfile: Dockerfile
     working_dir: /app
     command: python -m pytest /app/tests/ -v --cov=app --cov-report=term-missing
-    volumes:
-      - ./backend:/app
-      - ./usda:/app/usda
     environment:
       - TEST_DATABASE_URL=postgresql://test_user:test_pass@postgres_test:5432/test_db
       - POSTGRES_USER=test_user
