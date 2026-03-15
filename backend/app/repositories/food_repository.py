@@ -6,8 +6,8 @@ def search_foods(db: Session, query: str):
     sql = text("""
         SELECT id, name, calories, protein, carbs, fat
         FROM foods
-        WHERE search_vector @@ plainto_tsquery(:query)
-        ORDER BY ts_rank(search_vector, plainto_tsquery(:query)) DESC
+        WHERE search_vector @@ websearch_to_tsquery('english', :query)
+        ORDER BY ts_rank(search_vector, websearch_to_tsquery('english', :query)) DESC
         LIMIT 10
     """)
     result = db.execute(sql, {"query": query})
@@ -27,14 +27,19 @@ def search_foods_trigram(db: Session, query: str):
 
 
 def autocomplete_foods(db: Session, query: str):
-    sql = text("""
+    words = query.strip().split()
+    conditions = " AND ".join([f"name ILIKE :word{i}" for i in range(len(words))])
+    
+    sql = text(f"""
         SELECT id, name, calories, protein, carbs, fat
         FROM foods
-        WHERE name ILIKE :query
+        WHERE {conditions}
         ORDER BY name
         LIMIT 10
     """)
-    result = db.execute(sql, {"query": f"{query}%"})
+    
+    params = {f"word{i}": f"%{word}%" for i, word in enumerate(words)}
+    result = db.execute(sql, params)
     return result.fetchall()
 
 
