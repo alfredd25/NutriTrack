@@ -1,5 +1,6 @@
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+from app.models.food import Food
 
 
 def search_foods(db: Session, query: str):
@@ -44,5 +45,4 @@ def autocomplete_foods(db: Session, query: str):
 
 
 def get_food_by_id(db: Session, food_id: int):
-    from app.models.food import Food
     return db.query(Food).filter(Food.id == food_id).first()

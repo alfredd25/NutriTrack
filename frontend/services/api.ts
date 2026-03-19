@@ -51,17 +51,16 @@ export async function autocompleteFoods(query: string) {
 
 // --- Meals ---
 export async function createMeal(
-  user_id: number,
   date: string,
   meal_type: "breakfast" | "lunch" | "dinner" | "snack"
 ) {
   const res = await fetch(`${API_BASE}/meals/create`, {
     method: "POST",
     headers: authHeaders(),
-    body: JSON.stringify({ user_id, date, meal_type }),
+    body: JSON.stringify({ date, meal_type }),
   });
   if (!res.ok) throw await res.json();
-  return res.json(); // { meal_id }
+  return res.json();
 }
 
 export async function addFoodToMeal(
@@ -78,18 +77,18 @@ export async function addFoodToMeal(
   return res.json();
 }
 
-export async function getDaySummary(user_id: number, date: string) {
+export async function getDaySummary(date: string) {
   const res = await fetch(
-    `${API_BASE}/meals/day-summary?user_id=${user_id}&date=${date}`,
+    `${API_BASE}/meals/day-summary?date=${date}`,
     { headers: authHeaders() }
   );
   if (!res.ok) throw await res.json();
-  return res.json(); // MealSummary
+  return res.json();
 }
 
-export async function listMeals(user_id: number, date: string) {
-  const res = await fetch(
-    `${API_BASE}/meals/list?user_id=${user_id}&date=${date}`,
+export async function listMeals(date: string) {
+  const res = await fetch(                      
+    `${API_BASE}/meals/list?date=${date}`,
     { headers: authHeaders() }
   );
   if (!res.ok) throw await res.json();

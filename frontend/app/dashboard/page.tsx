@@ -28,9 +28,7 @@ export default function DashboardPage() {
     setLoading(true);
     setError("");
     try {
-      const userId = getUserId();
-      if (!userId) throw new Error("Not logged in");
-      const data = await getDaySummary(userId, today);
+      const data = await getDaySummary(today);
       setSummary(data);
     } catch (err: any) {
       if (err.detail === "No data for this date") {
@@ -42,7 +40,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }
+}
 
   function handleLogout() {
     logout();

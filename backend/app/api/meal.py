@@ -6,7 +6,9 @@ from enum import Enum
 from app.core.database import SessionLocal
 from app.services.meal_service import add_food_to_meal, get_daily_summary
 from app.repositories.meal_repository import create_meal
+from app.auth.jwt_handler import get_current_user
 from pydantic import BaseModel, field_validator
+from app.models.meal import Meal
 
 router = APIRouter()
 
@@ -27,9 +29,8 @@ class MealType(str, Enum):
 
 
 class CreateMealRequest(BaseModel):
-    user_id: int
     date: date
-    meal_type: MealType  # enum rejects "midnight_snack" with 422
+    meal_type: MealType
 
 
 class AddFoodRequest(BaseModel):
@@ -46,20 +47,26 @@ class AddFoodRequest(BaseModel):
 
 
 @router.post("/meals/create")
-def create_meal_endpoint(request: CreateMealRequest, db: Session = Depends(get_db)):
-    meal = create_meal(db, request.user_id, request.date, request.meal_type)
-    return {"meal_id": meal.id}  # fix: return meal_id key so tests can access it
+def create_meal_endpoint(
+    request: CreateMealRequest,
+    db: Session = Depends(get_db),
+    current_user: int = Depends(get_current_user),
+):
+    meal = create_meal(db, current_user, request.date, request.meal_type)
+    return {"meal_id": meal.id}
 
 
 @router.post("/meals/add-food")
-def add_food_endpoint(request: AddFoodRequest, db: Session = Depends(get_db)):
-    # look up the meal first so we can 404 if it doesn't exist
-    from app.models.meal import Meal
-
+def add_food_endpoint(
+    request: AddFoodRequest,
+    db: Session = Depends(get_db),
+    current_user: int = Depends(get_current_user),
+):
     meal = db.query(Meal).filter(Meal.id == request.meal_id).first()
     if not meal:
         raise HTTPException(status_code=404, detail="Meal not found")
-
+    if meal.user_id != current_user:
+        raise HTTPException(status_code=403, detail="Not your meal")
     try:
         meal_item = add_food_to_meal(
             db,
@@ -75,16 +82,22 @@ def add_food_endpoint(request: AddFoodRequest, db: Session = Depends(get_db)):
 
 
 @router.get("/meals/day-summary")
-def day_summary(user_id: int, date: date, db: Session = Depends(get_db)):
-    summary = get_daily_summary(db, user_id, str(date))
+def day_summary(
+    date: date,
+    db: Session = Depends(get_db),
+    current_user: int = Depends(get_current_user),
+):
+    summary = get_daily_summary(db, current_user, str(date))
     if not summary:
         raise HTTPException(status_code=404, detail="No data for this date")
     return summary
 
 
 @router.get("/meals/list")
-def list_meals(user_id: int, date: date, db: Session = Depends(get_db)):
-    from app.models.meal import Meal
-
-    meals = db.query(Meal).filter_by(user_id=user_id, date=date).all()
+def list_meals(
+    date: date,
+    db: Session = Depends(get_db),
+    current_user: int = Depends(get_current_user),
+):
+    meals = db.query(Meal).filter_by(user_id=current_user, date=date).all()
     return meals

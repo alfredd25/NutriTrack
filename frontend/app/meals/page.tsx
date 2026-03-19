@@ -39,13 +39,9 @@ export default function MealsPage() {
     setSaving(true);
     setMessage("");
     try {
-      const userId = getUserId();
-      if (!userId) throw new Error("Not logged in");
-
       const today = new Date().toISOString().split("T")[0];
-      const meal = await createMeal(userId, today, selectedMealType);
+      const meal = await createMeal(today, selectedMealType);
       await addFoodToMeal(meal.meal_id, food.id, quantity);
-
       setMessage(`✓ ${food.name} added to ${selectedMealType}`);
       setSelectedFoods((prev) => prev.filter((f) => f.id !== food.id));
     } catch (err: any) {
@@ -53,7 +49,7 @@ export default function MealsPage() {
     } finally {
       setSaving(false);
     }
-  }
+}
 
   return (
     <div className="min-h-screen bg-slate-50 p-6">
