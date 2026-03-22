@@ -6,6 +6,7 @@ from enum import Enum
 from app.core.database import SessionLocal
 from app.services.meal_service import add_food_to_meal, get_daily_summary
 from app.repositories.meal_repository import create_meal
+from app.repositories.meal_repository import remove_meal_item, get_weekly_summary, get_streak
 from app.auth.jwt_handler import get_current_user
 from pydantic import BaseModel, field_validator
 from app.models.meal import Meal
@@ -101,3 +102,42 @@ def list_meals(
 ):
     meals = db.query(Meal).filter_by(user_id=current_user, date=date).all()
     return meals
+
+
+@router.delete("/meals/remove-food/{meal_item_id}")
+def remove_food_endpoint(
+    meal_item_id: int,
+    db: Session = Depends(get_db),
+    current_user: int = Depends(get_current_user),
+):
+    result = remove_meal_item(db, meal_item_id, current_user)
+    if not result:
+        raise HTTPException(status_code=404, detail="Meal item not found")
+    return {"success": True}
+
+
+@router.get("/meals/weekly-summary")
+def weekly_summary(
+    db: Session = Depends(get_db),
+    current_user: int = Depends(get_current_user),
+):
+    rows = get_weekly_summary(db, current_user)
+    return [
+        {
+            "date": str(row.date),
+            "calories": row.calories,
+            "protein": row.protein,
+            "carbs": row.carbs,
+            "fat": row.fat,
+        }
+        for row in rows
+    ]
+
+
+@router.get("/meals/streak")
+def streak(
+    db: Session = Depends(get_db),
+    current_user: int = Depends(get_current_user),
+):
+    count = get_streak(db, current_user)
+    return {"streak": count}

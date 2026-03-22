@@ -72,3 +72,60 @@ def update_daily_summary(db: Session, user_id: int, date):
         db.add(summary)
 
     db.commit()
+
+def remove_meal_item(db: Session, meal_item_id: int, user_id: int):
+    meal_item = db.query(MealItem).filter(MealItem.id == meal_item_id).first()
+    if not meal_item:
+        return None
+    
+    meal = db.query(Meal).filter(Meal.id == meal_item.meal_id).first()
+    if meal.user_id != user_id:
+        return None
+    
+    date = meal.date
+    db.delete(meal_item)
+    db.commit()
+    update_daily_summary(db, user_id, date)
+    return True
+
+
+def get_weekly_summary(db: Session, user_id: int):
+    rows = db.execute(
+        text("""
+        SELECT date, calories, protein, carbs, fat
+        FROM daily_summaries
+        WHERE user_id = :user_id
+        AND date >= CURRENT_DATE - INTERVAL '6 days'
+        ORDER BY date ASC
+    """),
+        {"user_id": user_id},
+    ).fetchall()
+    return rows
+
+
+def get_streak(db: Session, user_id: int):
+    rows = db.execute(
+        text("""
+        SELECT date FROM daily_summaries
+        WHERE user_id = :user_id
+        AND calories > 0
+        ORDER BY date DESC
+    """),
+        {"user_id": user_id},
+    ).fetchall()
+
+    if not rows:
+        return 0
+
+    from datetime import date, timedelta
+    streak = 0
+    expected = date.today()
+
+    for row in rows:
+        if row.date == expected:
+            streak += 1
+            expected -= timedelta(days=1)
+        else:
+            break
+
+    return streak
