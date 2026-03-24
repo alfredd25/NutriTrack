@@ -23,14 +23,17 @@ def create_meal(db: Session, user_id: int, date, meal_type: str):
 
 
 def add_meal_item(db: Session, meal_id: int, food, quantity: float):
+    # Food nutritional values in the DB are per 100g (USDA standard),
+    # so we scale by (quantity / 100) to get the actual values for the given weight.
+    scale = quantity / 100.0
     meal_item = MealItem(
         meal_id=meal_id,
         food_id=food.id,
         quantity=quantity,
-        calories=food.calories * quantity,
-        protein=food.protein * quantity,
-        carbs=food.carbs * quantity,
-        fat=food.fat * quantity,
+        calories=food.calories * scale,
+        protein=food.protein * scale,
+        carbs=food.carbs * scale,
+        fat=food.fat * scale,
     )
     db.add(meal_item)
     db.commit()
